@@ -4,25 +4,48 @@ var issueContainerEl = document.querySelector("#issues-container");
 // limit warning container
 var limitWarningEl = document.querySelector("#limit-warning");
 
+// where to add repo name header
+var repoNameEl = document.querySelector("#repo-name");
+
+// extract query value from the auery string in API call getRepoIssues
+var getRepoName = function() {
+    // grab repo name from url query string
+    var queryString = document.location.search;
+    var repoName = queryString.split("=")[1];
+  
+    if (repoName) {
+      // display repo name on the page
+      repoNameEl.textContent = repoName;
+  
+      getRepoIssues(repoName);
+    } else {
+      // if no repo was given, redirect to the homepage
+      document.location.replace("./index.html");
+    }
+  };
+
 // get repo issues takes repo name as a parameter
 var getRepoIssues = function(repo) {
     // API endpoint and variable to define the query
     var apiUrl = "https://api.github.com/repos/" + repo + "/issues?direction=asc";
-    // HTTP request to hit the endpoint and check the info returned in the response
-    fetch(apiUrl).then(function(response) {
-        // request was successful
-        if (response.ok) {
-            response.json().then(function(data) {
-                //pass response data to the DOM function
-                displayIssues(data);
-
-                // check if api has paginated issues
-                displayWarning(repo)
-            })
-        } else {
-            alert("There was a problem with your request!");
+    // make a get request to url
+fetch(apiUrl).then(function(response) {
+    // request was successful
+    if (response.ok) {
+      response.json().then(function(data) {
+        displayIssues(data);
+  
+        // check if api has paginated issues
+        if (response.headers.get("Link")) {
+          displayWarning(repo);
         }
-    })
+      });
+    } else {
+      // if not successful, redirect to homepage
+      document.location.replace("./index.html");
+    }
+  });
+  
 }
 
 // Turning github issue data into DOM element
@@ -79,4 +102,4 @@ var displayWarning = function(repo) {
     limitWarningEl.appendChild(linkEl)
 }
 
-getRepoIssues("facebook/react");
+getRepoName();
